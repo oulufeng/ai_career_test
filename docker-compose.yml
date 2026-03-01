@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  career-test:
+    build: .
+    container_name: career-test-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
+      - PORT=3000
+      - DATABASE_PATH=/app/data/career_test.db
+    volumes:
+      - ./data:/app/data
+      - ./.env:/app/.env:ro
+    networks:
+      - career-network
+
+  # 可选：Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: career-test-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - career-test
+    networks:
+      - career-network
+    profiles:
+      - with-nginx
+
+networks:
+  career-network:
+    driver: bridge
